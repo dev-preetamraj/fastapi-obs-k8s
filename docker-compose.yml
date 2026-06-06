@@ -1,0 +1,9 @@
+services:
+  api:
+    build: .
+    image: fastapi-obs-k8s:dev
+    container_name: fastapi-obs-k8s
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    environment: {}
