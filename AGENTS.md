@@ -50,4 +50,6 @@ Structured logging via **structlog** → JSON to stdout. Every request log line 
 
 Env knobs: `LOG_LEVEL` (default `INFO`), `LOG_FORMAT` (`json` default, `console` for dev), `SERVICE_NAME` (default `fastapi-obs-k8s`).
 
-Stack lives under `observability/` (loki, alloy, grafana). `docker compose up -d` brings it up alongside `api`. Grafana on `:3000` (anonymous Admin), Loki on `:3100`, Alloy UI on `:12345`. Alloy discovers containers via compose labels — dashboards/datasources are gitops-provisioned (UI edits are ephemeral).
+Stack lives under `observability/` (loki, alloy, prometheus, grafana). `docker compose up -d` brings it up alongside `api`. Grafana on `:3000` (anonymous Admin), Loki on `:3100`, Alloy UI on `:12345`, Prometheus on `:9090`. Alloy discovers containers via compose labels — dashboards/datasources are gitops-provisioned (UI edits are ephemeral).
+
+Prometheus scrapes `api:8000/metrics` directly (see `observability/prometheus/prometheus.yml`). App-level metrics are defined in `src/app/metrics.py` and use the `fastapi_*` prefix with an `app_name` label (sourced from `SERVICE_NAME`) — the names match grafana.com dashboard 16110.
