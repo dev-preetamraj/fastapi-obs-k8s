@@ -8,7 +8,7 @@ from app.middleware.logging import RequestContextMiddleware
 
 configure_logging()
 
-log = structlog.get_logger()
+logger = structlog.get_logger()
 
 app = FastAPI()
 app.add_middleware(RequestContextMiddleware)
@@ -16,5 +16,5 @@ app.add_middleware(RequestContextMiddleware)
 
 @app.get("/")
 async def root() -> dict[str, str]:
-    log.info("hello")
+    logger.info("hello")
     return {"message": "Hello World"}
