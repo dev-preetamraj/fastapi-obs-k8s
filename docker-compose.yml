@@ -6,4 +6,7 @@ services:
     ports:
       - "8000:8000"
     restart: unless-stopped
-    environment: {}
+    environment:
+      LOG_FORMAT: json
+      LOG_LEVEL: INFO
+      SERVICE_NAME: fastapi-obs-k8s

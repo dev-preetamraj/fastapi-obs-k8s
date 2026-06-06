@@ -21,10 +21,14 @@ wheels/
 .vscode
 .idea
 
+# Tests not needed in the image
+tests/
+
 # Agent / docs not needed in the image
+# (README.md is kept — hatchling reads it at build time per pyproject.toml)
 AGENTS.md
 CLAUDE.md
-README.md
+TODOS.md
 .claude
 
 # Docker files themselves (not needed inside the image)
