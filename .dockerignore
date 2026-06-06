@@ -24,6 +24,10 @@ wheels/
 # Tests not needed in the image
 tests/
 
+# Observability stack configs (compose bind-mounts these from host; not for the api image)
+observability/
+scripts/
+
 # Agent / docs not needed in the image
 # (README.md is kept — hatchling reads it at build time per pyproject.toml)
 AGENTS.md

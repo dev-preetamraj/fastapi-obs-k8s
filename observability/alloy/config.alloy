@@ -1,0 +1,50 @@
+// Alloy config: discover containers in this compose project, ship their stdout
+// to Loki, exclude the observability stack itself.
+
+discovery.docker "containers" {
+	host             = "unix:///var/run/docker.sock"
+	refresh_interval = "5s"
+}
+
+discovery.relabel "containers" {
+	targets = discovery.docker.containers.targets
+
+	// Keep only containers in this compose project.
+	rule {
+		source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+		regex         = "fastapi-obs-k8s"
+		action        = "keep"
+	}
+
+	// Drop the observability stack — no feedback loop.
+	rule {
+		source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+		regex         = "alloy|loki|grafana"
+		action        = "drop"
+	}
+
+	// Promote compose service name to `service` label (Loki shard key).
+	rule {
+		source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+		target_label  = "service"
+	}
+
+	// Promote docker container name to `container` label (strip leading `/`).
+	rule {
+		source_labels = ["__meta_docker_container_name"]
+		regex         = "/(.*)"
+		target_label  = "container"
+	}
+}
+
+loki.source.docker "default" {
+	host       = "unix:///var/run/docker.sock"
+	targets    = discovery.relabel.containers.output
+	forward_to = [loki.write.default.receiver]
+}
+
+loki.write "default" {
+	endpoint {
+		url = "http://loki:3100/loki/api/v1/push"
+	}
+}

@@ -22,6 +22,7 @@ uv run python -m <module>            # run anything inside the project venv
 uv run ruff format .                 # format codebase
 uv run ruff check --fix .            # lint + auto-fix (incl. import sorting via `I` rules)
 uv run pytest                        # test suite (asyncio mode = auto, testpaths = tests/)
+bash scripts/smoke_observability.sh  # end-to-end logs pipeline check (stack must be up)
 ```
 
 Ruff handles both formatting and linting (no Black). Config lives in `pyproject.toml` under `[tool.ruff]`. VS Code is wired via `.vscode/settings.json` to format and organize imports on save using the [Ruff extension](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff).
@@ -45,6 +46,8 @@ FastAPI is launched via file path (`src/app/main.py`) — the editable install m
 
 ## Observability
 
-Structured logging via **structlog** → JSON to stdout (Grafana Loki / Alloy ready). Every request log line carries `trace_id` (W3C 32-hex) and `span_id` (16-hex) bound via `structlog.contextvars`. Responses carry `X-Trace-Id`. Inbound `traceparent` is honored; malformed values fall back to a fresh ID.
+Structured logging via **structlog** → JSON to stdout. Every request log line carries `trace_id` (W3C 32-hex) and `span_id` (16-hex) bound via `structlog.contextvars`. Responses carry `X-Trace-Id`. Inbound `traceparent` is honored; malformed values fall back to a fresh ID.
 
 Env knobs: `LOG_LEVEL` (default `INFO`), `LOG_FORMAT` (`json` default, `console` for dev), `SERVICE_NAME` (default `fastapi-obs-k8s`).
+
+Stack lives under `observability/` (loki, alloy, grafana). `docker compose up -d` brings it up alongside `api`. Grafana on `:3000` (anonymous Admin), Loki on `:3100`, Alloy UI on `:12345`. Alloy discovers containers via compose labels — dashboards/datasources are gitops-provisioned (UI edits are ephemeral).

@@ -1,3 +1,5 @@
+name: fastapi-obs-k8s
+
 services:
   api:
     build: .
@@ -10,3 +12,53 @@ services:
       LOG_FORMAT: json
       LOG_LEVEL: INFO
       SERVICE_NAME: fastapi-obs-k8s
+
+  loki:
+    image: grafana/loki:3.2.1
+    container_name: fastapi-obs-k8s-loki
+    command: -config.file=/etc/loki/config.yaml
+    ports:
+      - "3100:3100"
+    restart: unless-stopped
+    volumes:
+      - ./observability/loki/config.yaml:/etc/loki/config.yaml:ro
+      - loki-data:/loki
+
+  alloy:
+    image: grafana/alloy:v1.5.0
+    container_name: fastapi-obs-k8s-alloy
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    ports:
+      - "12345:12345"
+    restart: unless-stopped
+    depends_on:
+      - loki
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: fastapi-obs-k8s-grafana
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    depends_on:
+      - loki
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_LOG_LEVEL: warn
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+
+volumes:
+  loki-data:
+  grafana-data:
